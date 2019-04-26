@@ -1,0 +1,23 @@
+TESTS UNITAIRES
+
+- Pourquoi Tester
+Qualité , Serein , Moins de bugs et de regression => Plus grandes satisfaction du client
+
+- Les niveaux de TESTS
+
+1) Tests unitaire s-> méthodes de classes pour être que ça marche
+2) " d'intégration -> checker uen feature(ex: le endpoint d'une API ) pour savoir si c'est intégré au système d'exec.
+3) Les tests système -> Mettre en place un scénario complet  dans tous envionnement
+4)  " d'acception -> Valider l'acception d'une fonctionnalité 
+5) Les tests A/B -> Présenter 2 versiosn d'une feature pour ensuite savoir laquelle est la meilleure 
+    -> Mesurer l'impact d'un changement
+6) Les tests fonctionnels -> Validr le compor. d'une feature (Voir les tests en boîtes blanches)
+7) Les tests de robustesses ->  Tester selon les limites des capacités de performance.
+Simule un site visité/utilisé par 500,1000 ,2000 personnes.
+8) Les tests de montée en charge -> Simuler un nombre crosisant d'utilisarteurs pour détermine quand un site ne peut plus tenuir la charge.
+
+
+- Les natures de test
+
+Test en boîte-blanches -> Test fait par des gens plus techniques
+Test en boîte-noires -> Test fait par des gens moins techniques
