@@ -20,4 +20,4 @@ class Product:
         return self.owner
 
     def isValid(self):
-        return (self.label != "" and self.owner.isValid())        
+        return (self.label != "" and self.label is not None and self.owner.isValid())        
