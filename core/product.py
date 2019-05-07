@@ -1,5 +1,5 @@
 class Product:
-
+    
     label = ""
     owner = ""
 

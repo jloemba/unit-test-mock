@@ -1,7 +1,7 @@
 class Calculator:
 
 
-    def initialize(self):
+    def __init__(self):
         self.sign = None
 
     def add(a,b):

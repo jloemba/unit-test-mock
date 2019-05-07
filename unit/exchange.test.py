@@ -1,19 +1,20 @@
-#Pour communiquer avec les autres sous répertoire
-import os
-import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 
 from datetime import *
 import unittest
 from core import user
 from core import product
 from core import exchange
+from unittest.mock import patch, Mock
 
 
 class TestUM(unittest.TestCase):
     
-    def setUp(self):
+    @patch('service.dbconnection.DBConnection', autospec=True)
+    @patch('service.emailsender.EmailSender', autospec=True)
+    def setUp(self,mockdb,mockmailer):
 
+        #help(MockUser)
         #---- Les utilisateurs-----
         # ----- User A(Majeur) -----
         self.uA = user.User()
@@ -34,7 +35,7 @@ class TestUM(unittest.TestCase):
         self.uC.setEmail('jorisloemba@gmail.com')
         self.uC.setLastname('Loemba')
         self.uC.setFirstname('Joris')
-        self.uC.setAge(15)
+        self.uC.setAge(19)
 
         # ---- User D(Mineur & moins de 13 ans)
         self.uD = user.User()
@@ -61,62 +62,51 @@ class TestUM(unittest.TestCase):
         self.p3.setOwner(self.uD)
 
 
-        #Les échanges
-        # CAS 1 : Utilisateyr valide + Dates valides + Produit valide
+        # CAS 1 : Utilisateyr valide + Dates valides + Produit valide => Insertion en Base de données
+        mockdb.return_value.message = "Insertion de l'échange"
+        self.mockA = mockdb
         self.eA = exchange.Exchange()
         self.eA.setProduct(self.p1)
         self.eA.setOwner(self.uA)        
-        self.eA.setReceiver(self.uB)
-        self.eA.setSDate( datetime(2019, 4, 3) ) 
-        self.eA.setEDate( datetime(2019, 4, 20) )
+        self.eA.setReceiver(self.uC)
+        self.eA.setSDate( datetime(2019, 6, 3) ) 
+        self.eA.setEDate( datetime(2019, 6, 20) )
 
-        # CAS 2 : Utilisateur valide + Dates invalides  + Produit valide
+        # CAS 2 : Dates invalides car la date de début à lieu après la date de fin => Retourne nulle
+        mockmailer.return_value.message = "Envoi du mail"
+        self.mockB =  mockmailer
+
         self.eB = exchange.Exchange()
         self.eB.setProduct(self.p1)
         self.eB.setOwner(self.uA)        
         self.eB.setReceiver(self.uB)
-        self.eB.setSDate( datetime(2019, 4, 20) )
-        self.eB.setEDate( datetime(2019, 4, 3) )
+        self.eB.setSDate( datetime(2019, 6, 20) )
+        self.eB.setEDate( datetime(2019, 6, 3) )
 
-        # CAS 3 : Utilisateur invalide + Dates invalides + Produit valide
+        # CAS 3 : Produit non valide car le propriétaire n'est pas valide
+        self.mockC =  mockmailer
         self.eC = exchange.Exchange()
-        self.eC.setProduct(self.p1)
+        self.eC.setProduct(self.p2)
         self.eC.setOwner(self.uA)        
         self.eC.setReceiver(self.uB)
-        self.eC.setSDate( datetime(2019, 4, 30) )
-        self.eC.setEDate( datetime(2019, 4, 3) )
+        self.eC.setSDate( datetime(2019, 6, 1) )
+        self.eC.setEDate( datetime(2019, 6, 13) )
 
-        # CAS 3 : Utilisateur invalide + Dates nulles + Produit valide
+        # CAS 4 : Invalide car l'emprunteur n'est pas majeur => Envoie d'un mail
+        self.mockD =  mockmailer
         self.eD = exchange.Exchange()
         self.eD.setProduct(self.p1)
         self.eD.setOwner(self.uA)        
-        self.eD.setReceiver(self.uB)
-        self.eD.setSDate(None)
-        self.eD.setEDate(None)
+        self.eD.setReceiver(self.uD)
+        self.eC.setSDate( datetime(2019, 6, 1) )
+        self.eC.setEDate( datetime(2019, 6, 13) )
 
-        # CAS 3 : Utilisateur invalide + Dates nulles + Produit valide
-        self.eE = exchange.Exchange()
-        self.eE.setProduct(self.p1)
-        self.eE.setOwner(self.uA)        
-        self.eE.setReceiver(self.uB)
-        self.eE.setSDate( datetime(2019, 4, 3) )
-        self.eE.setEDate(None)
-
-        # CAS 3 : Utilisateur valide + Dates nulles + Produit invalide
-        self.eF = exchange.Exchange()
-        self.eF.setProduct(self.p2)
-        self.eF.setOwner(self.uA)        
-        self.eF.setReceiver(self.uB)
-        self.eF.setSDate(None)
-        self.eF.setEDate(None)
-
+    
     def testSave(self): #Ok
-        self.assertEqual( self.eA.save() , True) 
-        self.assertEqual( self.eB.save() , None)
-        self.assertEqual( self.eC.save() , None)
-        self.assertEqual( self.eD.save() , None)
-        self.assertEqual( self.eE.save() , None)
-        self.assertEqual( self.eF.save() , None)
+        self.assertEqual( self.eA.save() , self.mockA.return_value.message )  # CAS 1 : Utilisateyr valide + Dates valides + Produit valide => Insertion en Base de données
+        self.assertEqual( self.eB.save() , None ) # CAS 2 : Dates invalides car la date de début à lieu après la date de fin => Retourne nulle
+        self.assertEqual( self.eC.save() , self.mockC.return_value.message )# CAS 3 : Produit non valide car le propriétaire n'est pas valide
+        self.assertEqual( self.eD.save() , self.mockD.return_value.message )# CAS 4 : Invalide car l'emprunteur n'est pas majeur => Envoie d'un mail
     
 
 if __name__ == '__main__':

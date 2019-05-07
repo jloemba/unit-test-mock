@@ -1,0 +1,87 @@
+|  assert_any_call(self, *args, **kwargs)
+ |      assert the mock has been called with the specified arguments.
+ |
+ |      The assert passes if the mock has *ever* been called, unlike
+ |      `assert_called_with` and `assert_called_once_with` that only pass if
+ |      the call is the most recent one.
+ |
+ |  assert_called(_mock_self)
+ |      assert that the mock was called at least once
+ |
+ |  assert_called_once(_mock_self)
+ |      assert that the mock was called only once.
+ |
+ |  assert_called_once_with(_mock_self, *args, **kwargs)
+ |      assert that the mock was called exactly once and with the specified
+ |      arguments.
+ |
+ |  assert_called_with(_mock_self, *args, **kwargs)
+ |      assert that the mock was called with the specified arguments.
+ |
+ |      Raises an AssertionError if the args and keyword args passed in are
+ |      different to the last call to the mock.
+ |
+ |  assert_has_calls(self, calls, any_order=False)
+ |      assert the mock has been called with the specified calls.
+ |      The `mock_calls` list is checked for the calls.
+ |
+ |      If `any_order` is False (the default) then the calls must be
+ |      sequential. There can be extra calls before or after the
+ |      specified calls.
+ |
+ |      If `any_order` is True then the calls can be in any order, but
+ |      they must all appear in `mock_calls`.
+ |
+ |  assert_not_called(_mock_self)
+ |      assert that the mock was never called.
+ |
+ |  attach_mock(self, mock, attribute)
+ |      Attach a mock as an attribute of this one, replacing its name and
+ |      parent. Calls to the attached mock will be recorded in the
+ |      `method_calls` and `mock_calls` attributes of this one.
+ |
+ |  configure_mock(self, **kwargs)
+ |      Set attributes on the mock through keyword arguments.
+ |
+ |      Attributes plus return values and side effects can be set on child
+ |      mocks using standard dot notation and unpacking a dictionary in the
+ |      method call:
+ |
+ |      >>> attrs = {'method.return_value': 3, 'other.side_effect': KeyError}
+ |      >>> mock.configure_mock(**attrs)
+ |
+ import unittest
+from requests.exceptions import Timeout
+from unittest.mock import Mock
+
+# Mock requests to control its behavior
+requests = Mock()
+
+def get_holidays():
+    r = requests.get('http://localhost/api/holidays')
+    if r.status_code == 200:
+        return r.json()
+    return None
+
+class TestCalendar(unittest.TestCase):
+
+    def test_get_holidays_retry(self):
+        # Create a new Mock to imitate a Response
+        response_mock = Mock()
+        response_mock.status_code = 200
+        response_mock.json.return_value = {
+            '12/25': 'Christmas',
+            '7/4': 'Independence Day',
+        }
+        # Set the side effect of .get()
+        requests.get.side_effect = [Timeout, response_mock]
+        # Test that the first request raises a Timeout
+        with self.assertRaises(Timeout):
+            get_holidays()
+        # Now retry, expecting a successful response
+        assert get_holidays()['12/25'] == 'Christmas'
+        # Finally, assert .get() was called twice
+        assert requests.get.call_count == 2
+
+if __name__ == '__main__':
+    unittest.main()
